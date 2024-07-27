@@ -20,30 +20,36 @@ const getPrice = async (partNumber, volume) => {
       }
     });
 
-    const products = response.data.manufacturerPartNumberSearchReturn.products;
+    const res = response.data.manufacturerPartNumberSearchReturn.products;
+    const parts = res.filter(part =>part.translatedManufacturerPartNumber === partNumber);
 
-    if (!products || products.length === 0) return null;
-
-    const product = products[0];
-    const priceBreaks = product.prices;
+    if (!parts || parts.length === 0) return null;
 
     let bestPrice = null;
 
-    for (const priceBreak of priceBreaks) {
-      if (volume >= priceBreak.from && volume <= priceBreak.to) {
-        const unitPrice = parseFloat(priceBreak.cost);
-        bestPrice = {
-          partNumber: product.translatedManufacturerPartNumber,
-          manufacturer: product.vendorName,
-          unitPrice: unitPrice,
-          currency: 'USD', // Assuming currency is USD
-          totalPrice: unitPrice * volume
-        };
-        break; // Found the correct price break, no need to continue
+    for (const part of parts) {
+      const priceBreaks = part.prices;
+
+      if (!priceBreaks || priceBreaks.length === 0) continue;
+
+      for (const priceBreak of priceBreaks) {
+        if (volume >= priceBreak.from && volume <= priceBreak.to) {
+          const unitPrice = parseFloat(priceBreak.cost);
+          if (!bestPrice || unitPrice < bestPrice.unitPrice) {
+            bestPrice = {
+              partNumber: part.translatedManufacturerPartNumber,
+              manufacturer: part.vendorName,
+              unitPrice: unitPrice,
+              currency: 'INR', // Assuming currency is INR
+              totalPrice: unitPrice * volume
+            };
+          }
+        }
       }
     }
 
     return bestPrice;
+
 
   } catch (error) {
     console.error('Error fetching data from Element14:', error);

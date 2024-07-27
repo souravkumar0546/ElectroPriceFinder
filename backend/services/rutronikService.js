@@ -12,38 +12,42 @@ const getPrice = async (partNumber, volume) => {
       }
     });
 
-    const products = response.data;
+    const res = response.data;
+    const parts=res.filter(part =>part.mpn === partNumber);;
 
-    if (!products || products.length === 0) return null;
 
-    const product = products[0];
-    const priceBreaks = product.pricebreaks;
-
-    if (!priceBreaks || priceBreaks.length === 0) return null;
+    if (!parts || parts.length === 0) return null;
 
     let bestPrice = null;
-    let basePrice = parseFloat(product.price); // Base price for quantities below the first price break
 
-    // Check if the volume is less than the first price break
-    if (volume < priceBreaks[0].quantity && volume>0) {
-      bestPrice = {
-        partNumber: product.mpn,
-        manufacturer: product.manufacturer,
-        unitPrice: basePrice,
-        currency: product.currency
-      };
-    } else {
-      // Find the best price based on the price breaks
-      for (const priceBreak of priceBreaks) {
-        if (volume >= priceBreak.quantity) {
-          const unitPrice = parseFloat(priceBreak.price);
-          if (!bestPrice || unitPrice < bestPrice.unitPrice) {
-            bestPrice = {
-              partNumber: product.mpn,
-              manufacturer: product.manufacturer,
-              unitPrice: unitPrice,
-              currency: product.currency
-            };
+    for (const part of parts) {
+      const priceBreaks = part.pricebreaks;
+      if (!priceBreaks || priceBreaks.length === 0) continue;
+
+      let basePrice = parseFloat(part.price);
+
+      if (volume < priceBreaks[0].quantity && volume > 0) {
+        const unitPrice = basePrice;
+        if (!bestPrice || unitPrice < bestPrice.unitPrice) {
+          bestPrice = {
+            partNumber: part.mpn,
+            manufacturer: part.manufacturer,
+            unitPrice: unitPrice,
+            currency: part.currency
+          };
+        }
+      } else{
+        for (const priceBreak of priceBreaks) {
+          if (volume >= priceBreak.quantity) {
+            const unitPrice = parseFloat(priceBreak.price);
+            if (!bestPrice || unitPrice < bestPrice.unitPrice) {
+              bestPrice = {
+                partNumber: part.mpn,
+                manufacturer: part.manufacturer,
+                unitPrice: unitPrice,
+                currency: part.currency
+              };
+            }
           }
         }
       }
@@ -54,6 +58,7 @@ const getPrice = async (partNumber, volume) => {
     }
 
     return bestPrice;
+
 
   } catch (error) {
     console.error('Error fetching data from Rutronik:', error);

@@ -19,7 +19,8 @@ const getPrice = async (partNumber, volume) => {
       }
     );
 
-    const parts = response.data.SearchResults.Parts;
+    const res = response.data.SearchResults.Parts;
+    const parts=res.filter(part =>part.ManufacturerPartNumber === partNumber);
 
     if (!parts || parts.length === 0) return null;
 
