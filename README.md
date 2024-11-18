@@ -1,4 +1,4 @@
-# ZionixTechAssignment
+# ElectroPriceFinder
 
 This project is a full-stack application that fetches electronic part prices from multiple providers (Mouser, Rutronik, and Element14) and allows users to manage cart.
 
